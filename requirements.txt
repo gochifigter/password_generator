@@ -1,0 +1,6 @@
+# No external dependencies required for basic functionality
+# Uses only Python standard library
+
+# Optional: for future enhancements
+# cryptography>=3.4.0
+# pyperclip>=1.8.0
