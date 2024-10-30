@@ -1,121 +1,127 @@
 """
-Advanced password generator with additional features.
+Advanced password generator with pattern-based generation
 """
 
 import secrets
+from typing import List, Optional
 from password_generator import PasswordGenerator
-from config import CUSTOM_CHARACTER_SETS, PASSWORD_PROFILES
+
 
 class AdvancedPasswordGenerator(PasswordGenerator):
-    """Extended password generator with additional features."""
+    """
+    Extended password generator with advanced features
+    """
     
-    def __init__(self):
-        super().__init__()
-        self.custom_sets = CUSTOM_CHARACTER_SETS
-        self.profiles = PASSWORD_PROFILES
-    
-    def generate_with_profile(self, profile_name: str) -> str:
+    def generate_memorable_password(self, 
+                                  word_count: int = 4,
+                                  separator: str = '-',
+                                  capitalize: bool = True) -> str:
         """
-        Generate password using predefined strength profile.
+        Generate a memorable but secure password using word-like patterns
         
         Args:
-            profile_name (str): Name of the profile ('weak', 'medium', 'strong', 'very_strong')
-        
+            word_count: Number of word-like segments
+            separator: Character to separate segments
+            capitalize: Whether to capitalize segments
+            
         Returns:
-            str: Generated password
-        
-        Raises:
-            ValueError: If profile name is invalid
+            Memorable password string
         """
-        if profile_name not in self.profiles:
-            raise ValueError(f"Unknown profile: {profile_name}. Available: {list(self.profiles.keys())}")
+        # Common syllable patterns for pronounceable passwords
+        syllables = [
+            'ba', 'be', 'bi', 'bo', 'bu', 'ca', 'ce', 'ci', 'co', 'cu',
+            'da', 'de', 'di', 'do', 'du', 'fa', 'fe', 'fi', 'fo', 'fu',
+            'ga', 'ge', 'gi', 'go', 'gu', 'ha', 'he', 'hi', 'ho', 'hu',
+            'ja', 'je', 'ji', 'jo', 'ju', 'ka', 'ke', 'ki', 'ko', 'ku',
+            'la', 'le', 'li', 'lo', 'lu', 'ma', 'me', 'mi', 'mo', 'mu',
+            'na', 'ne', 'ni', 'no', 'nu', 'pa', 'pe', 'pi', 'po', 'pu',
+            'ra', 're', 'ri', 'ro', 'ru', 'sa', 'se', 'si', 'so', 'su',
+            'ta', 'te', 'ti', 'to', 'tu', 'va', 've', 'vi', 'vo', 'vu',
+            'za', 'ze', 'zi', 'zo', 'zu', 'cha', 'che', 'chi', 'cho', 'chu',
+            'sha', 'she', 'shi', 'sho', 'shu', 'tha', 'the', 'thi', 'tho', 'thu'
+        ]
         
-        profile = self.profiles[profile_name]
-        return self.generate_password(
-            length=profile['length'],
-            lowercase=profile['lowercase'],
-            uppercase=profile['uppercase'],
-            digits=profile['digits'],
-            symbols=profile['symbols']
-        )
+        words = []
+        for _ in range(word_count):
+            # Create word-like pattern (2-3 syllables)
+            syllable_count = secrets.choice([2, 3])
+            word = ''.join(secrets.choice(syllables) for _ in range(syllable_count))
+            
+            if capitalize:
+                word = word.capitalize()
+            
+            words.append(word)
+        
+        # Add a random number at the end for extra security
+        words.append(str(secrets.randbelow(90) + 10))  # 10-99
+        
+        return separator.join(words)
     
-    def generate_with_custom_charset(self, length: int, charset: str) -> str:
+    def generate_pattern_password(self, pattern: str = "lllddss") -> str:
         """
-        Generate password using custom character set.
+        Generate password based on pattern
         
         Args:
-            length (int): Password length
-            charset (str): Custom character set string
-        
+            pattern: Pattern where:
+                   l = lowercase, u = uppercase, d = digit, s = symbol
+                   
         Returns:
-            str: Generated password
-        
-        Raises:
-            ValueError: If charset is empty or too short
+            Pattern-based password
         """
-        if not charset:
-            raise ValueError("Character set cannot be empty")
+        char_map = {
+            'l': string.ascii_lowercase,
+            'u': string.ascii_uppercase,
+            'd': string.digits,
+            's': string.punctuation
+        }
         
-        if len(charset) < 2:
-            raise ValueError("Character set must contain at least 2 characters")
+        password = []
+        for char_type in pattern:
+            if char_type in char_map:
+                password.append(secrets.choice(char_map[char_type]))
+            else:
+                # If pattern character not recognized, use all available
+                self.configure_character_set()
+                password.append(secrets.choice(self.available_chars))
         
-        return ''.join(secrets.choice(charset) for _ in range(length))
+        return ''.join(password)
     
-    def estimate_strength(self, password: str) -> str:
+    def generate_passphrase(self, 
+                          word_list: Optional[List[str]] = None,
+                          word_count: int = 6,
+                          separator: str = ' ') -> str:
         """
-        Estimate password strength based on character diversity and length.
+        Generate a passphrase using a word list
         
         Args:
-            password (str): Password to analyze
-        
+            word_list: Custom word list (uses default if None)
+            word_count: Number of words in passphrase
+            separator: Word separator
+            
         Returns:
-            str: Strength rating ('Very Weak', 'Weak', 'Medium', 'Strong', 'Very Strong')
+            Generated passphrase
         """
-        if len(password) < 8:
-            return "Very Weak"
+        if word_list is None:
+            # Common words for passphrases
+            word_list = [
+                'apple', 'river', 'mountain', 'sunshine', 'whisper', 'crystal',
+                'forest', 'ocean', 'butterfly', 'thunder', 'silence', 'journey',
+                'garden', 'mirror', 'shadow', 'diamond', 'freedom', 'harmony',
+                'victory', 'wonder', 'courage', 'passion', 'mystery', 'treasure',
+                'horizon', 'melody', 'twilight', 'destiny', 'infinity', 'universe'
+            ]
         
-        has_lower = any(c.islower() for c in password)
-        has_upper = any(c.isupper() for c in password)
-        has_digit = any(c.isdigit() for c in password)
-        has_symbol = any(not c.isalnum() for c in password)
+        if len(word_list) < word_count:
+            raise ValueError("Word list too small for requested passphrase")
         
-        char_types = sum([has_lower, has_upper, has_digit, has_symbol])
-        length = len(password)
-        
-        if length >= 20 and char_types == 4:
-            return "Very Strong"
-        elif length >= 16 and char_types >= 3:
-            return "Strong"
-        elif length >= 12 and char_types >= 2:
-            return "Medium"
-        elif length >= 8:
-            return "Weak"
-        else:
-            return "Very Weak"
+        words = secrets.SystemRandom().sample(word_list, word_count)
+        return separator.join(words)
 
-def demo():
-    """Demonstrate the advanced generator features."""
-    generator = AdvancedPasswordGenerator()
-    
-    print("=== Password Generator Demo ===")
-    
-    # Generate with profiles
-    for profile in ['weak', 'medium', 'strong', 'very_strong']:
-        password = generator.generate_with_profile(profile)
-        strength = generator.estimate_strength(password)
-        print(f"{profile.title()} profile: {password} [{strength}]")
-    
-    print("\n=== Custom Character Sets ===")
-    
-    # Generate with custom character sets
-    for name, charset in generator.custom_sets.items():
-        if len(charset) > 10:  # Use first 10 chars for display
-            display_chars = charset[:10] + "..."
-        else:
-            display_chars = charset
-        
-        password = generator.generate_with_custom_charset(12, charset)
-        print(f"{name}: {password} (chars: {display_chars})")
 
-if __name__ == "__main__":
-    demo()
+# Example usage
+if __name__ == '__main__':
+    advanced_gen = AdvancedPasswordGenerator()
+    
+    print("Memorable Password:", advanced_gen.generate_memorable_password())
+    print("Pattern Password:", advanced_gen.generate_pattern_password("lluudds"))
+    print("Passphrase:", advanced_gen.generate_passphrase())
