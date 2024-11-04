@@ -1,59 +1,79 @@
 """
-Example usage of the password generator.
+Example usage of the password generator
 """
 
-from password_generator import PasswordGenerator
+from password_generator import PasswordGenerator, create_default_generator
 from advanced_generator import AdvancedPasswordGenerator
 
+
 def basic_examples():
-    """Basic usage examples."""
-    print("=== Basic Password Generator Examples ===")
+    """Basic password generation examples"""
+    print("=== BASIC PASSWORD GENERATION ===")
+    
+    # Simple usage with defaults
+    generator = create_default_generator()
+    password = generator.generate_password(12)
+    print(f"Default password: {password}")
+    
+    # Check strength
+    strength = generator.get_password_strength(password)
+    print(f"Strength: {strength}")
+    
+    # Generate multiple passwords
+    print("\nMultiple passwords:")
+    passwords = generator.generate_multiple_passwords(3, 16)
+    for i, pwd in enumerate(passwords, 1):
+        print(f"{i}. {pwd}")
+
+
+def custom_configuration():
+    """Examples with custom configuration"""
+    print("\n=== CUSTOM CONFIGURATION ===")
     
     generator = PasswordGenerator()
     
-    # Generate a default password (16 chars, all character sets)
-    password1 = generator.generate_password()
-    print(f"Default password: {password1}")
+    # Only letters and digits
+    generator.configure_character_set(
+        include_lowercase=True,
+        include_uppercase=True,
+        include_digits=True,
+        include_symbols=False
+    )
+    password = generator.generate_password(14)
+    print(f"Letters + digits only: {password}")
     
-    # Generate a shorter numeric PIN
-    pin = generator.generate_password(6, lowercase=False, uppercase=False, symbols=False, digits=True)
-    print(f"6-digit PIN: {pin}")
-    
-    # Generate multiple passwords
-    passwords = generator.generate_multiple_passwords(3, 12)
-    print("3 passwords (12 chars each):")
-    for i, pwd in enumerate(passwords, 1):
-        print(f"  {i}. {pwd}")
+    # Custom characters
+    generator.configure_character_set(
+        include_lowercase=True,
+        include_uppercase=False,
+        include_digits=True,
+        include_symbols=False,
+        custom_chars="€£¥"
+    )
+    password = generator.generate_password(10)
+    print(f"With custom characters: {password}")
+
 
 def advanced_examples():
-    """Advanced usage examples."""
-    print("\n=== Advanced Password Generator Examples ===")
+    """Advanced generator examples"""
+    print("\n=== ADVANCED FEATURES ===")
     
     advanced_gen = AdvancedPasswordGenerator()
     
-    # Generate using profiles
-    strong_password = advanced_gen.generate_with_profile('strong')
-    strength = advanced_gen.estimate_strength(strong_password)
-    print(f"Strong profile: {strong_password} [{strength}]")
+    # Memorable password
+    memorable = advanced_gen.generate_memorable_password()
+    print(f"Memorable password: {memorable}")
     
-    # Generate with custom character set
-    hex_password = advanced_gen.generate_with_custom_charset(8, '0123456789ABCDEF')
-    print(f"Hexadecimal password: {hex_password}")
+    # Pattern-based password
+    pattern_pwd = advanced_gen.generate_pattern_password("lluudds")
+    print(f"Pattern password: {pattern_pwd}")
     
-    # Test password strength estimation
-    test_passwords = [
-        "abc",
-        "password123",
-        "Password123",
-        "P@ssw0rd!2024",
-        "V3ry$tr0ngP@ssw0rdW1thSp3c1@lCh@r5!"
-    ]
-    
-    print("\n=== Password Strength Analysis ===")
-    for pwd in test_passwords:
-        strength = advanced_gen.estimate_strength(pwd)
-        print(f"'{pwd}' -> {strength}")
+    # Passphrase
+    passphrase = advanced_gen.generate_passphrase(word_count=4)
+    print(f"Passphrase: {passphrase}")
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     basic_examples()
+    custom_configuration()
     advanced_examples()
