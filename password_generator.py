@@ -5,13 +5,10 @@ Generates cryptographically secure random passwords
 
 import secrets
 import string
-from typing import List, Dict, Optional
-
+from typing import List, Dict
 
 class PasswordGenerator:
-    """
-    A secure password generator with customizable character sets and length
-    """
+    """Secure password generator with customizable character sets"""
     
     # Predefined character sets
     CHARACTER_SETS = {
@@ -19,121 +16,97 @@ class PasswordGenerator:
         'uppercase': string.ascii_uppercase,
         'digits': string.digits,
         'symbols': string.punctuation,
-        'hexdigits': string.hexdigits,
-        'letters': string.ascii_letters
+        'hex': string.hexdigits,
+        'alphanumeric': string.ascii_letters + string.digits
     }
     
     def __init__(self):
         self.available_chars = ""
-        self.min_length = 8
-        self.max_length = 128
     
-    def configure_character_set(self, 
-                              include_lowercase: bool = True,
-                              include_uppercase: bool = True,
-                              include_digits: bool = True,
-                              include_symbols: bool = True,
-                              custom_chars: str = "") -> None:
+    def set_character_set(self, char_types: List[str]) -> None:
         """
-        Configure which character sets to include in password generation
+        Set the character set for password generation
         
         Args:
-            include_lowercase: Include lowercase letters (a-z)
-            include_uppercase: Include uppercase letters (A-Z)
-            include_digits: Include digits (0-9)
-            include_symbols: Include symbols (!@#$% etc.)
-            custom_chars: Additional custom characters to include
+            char_types: List of character types to include
+                      Options: 'lowercase', 'uppercase', 'digits', 
+                              'symbols', 'hex', 'alphanumeric'
         """
         self.available_chars = ""
+        for char_type in char_types:
+            if char_type in self.CHARACTER_SETS:
+                self.available_chars += self.CHARACTER_SETS[char_type]
         
-        if include_lowercase:
-            self.available_chars += self.CHARACTER_SETS['lowercase']
-        if include_uppercase:
-            self.available_chars += self.CHARACTER_SETS['uppercase']
-        if include_digits:
-            self.available_chars += self.CHARACTER_SETS['digits']
-        if include_symbols:
-            self.available_chars += self.CHARACTER_SETS['symbols']
-        
-        self.available_chars += custom_chars
-        
-        # Ensure we have at least some characters
         if not self.available_chars:
-            self.available_chars = string.ascii_letters + string.digits
+            raise ValueError("No valid character types specified")
+    
+    def set_custom_character_set(self, custom_chars: str) -> None:
+        """
+        Set a custom character set for password generation
+        
+        Args:
+            custom_chars: String containing custom characters to use
+        """
+        if not custom_chars:
+            raise ValueError("Custom character set cannot be empty")
+        self.available_chars = custom_chars
     
     def generate_password(self, length: int = 16) -> str:
         """
         Generate a secure random password
         
         Args:
-            length: Desired password length (8-128 characters)
+            length: Length of the password (default: 16)
             
         Returns:
             str: Generated password
             
         Raises:
-            ValueError: If length is invalid or no characters available
+            ValueError: If character set is not set or length is invalid
         """
         if not self.available_chars:
-            self.configure_character_set()  # Use default configuration
+            raise ValueError("Character set not configured. Use set_character_set() first.")
         
-        if length < self.min_length or length > self.max_length:
-            raise ValueError(f"Password length must be between {self.min_length} and {self.max_length}")
+        if length < 1:
+            raise ValueError("Password length must be at least 1")
         
-        if len(self.available_chars) < 4:
-            raise ValueError("Character set too small for secure password generation")
-        
-        # Generate password using cryptographically secure random
+        # Use secrets module for cryptographically secure random generation
         password = ''.join(secrets.choice(self.available_chars) for _ in range(length))
-        
         return password
     
-    def generate_multiple_passwords(self, count: int = 5, length: int = 16) -> List[str]:
+    def generate_multiple_passwords(self, length: int = 16, count: int = 5) -> List[str]:
         """
         Generate multiple passwords at once
         
         Args:
-            count: Number of passwords to generate
             length: Length of each password
+            count: Number of passwords to generate
             
         Returns:
-            List of generated passwords
+            List[str]: List of generated passwords
         """
         return [self.generate_password(length) for _ in range(count)]
     
     def get_password_strength(self, password: str) -> Dict[str, bool]:
         """
-        Analyze password strength based on common criteria
+        Analyze password strength
         
         Args:
             password: Password to analyze
             
         Returns:
-            Dictionary with strength indicators
+            Dict with strength indicators
         """
         has_lower = any(c in string.ascii_lowercase for c in password)
         has_upper = any(c in string.ascii_uppercase for c in password)
         has_digit = any(c in string.digits for c in password)
         has_symbol = any(c in string.punctuation for c in password)
-        sufficient_length = len(password) >= 12
         
         return {
+            'length_adequate': len(password) >= 12,
             'has_lowercase': has_lower,
             'has_uppercase': has_upper,
             'has_digits': has_digit,
             'has_symbols': has_symbol,
-            'sufficient_length': sufficient_length,
-            'is_strong': all([has_lower, has_upper, has_digit, has_symbol, sufficient_length])
+            'is_strong': len(password) >= 12 and has_lower and has_upper and has_digit
         }
-
-
-def create_default_generator() -> PasswordGenerator:
-    """Create a generator with secure default settings"""
-    generator = PasswordGenerator()
-    generator.configure_character_set(
-        include_lowercase=True,
-        include_uppercase=True,
-        include_digits=True,
-        include_symbols=True
-    )
-    return generator
